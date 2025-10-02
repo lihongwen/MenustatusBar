@@ -3,20 +3,25 @@
 <p align="center">
   <img src="https://img.shields.io/badge/macOS-13.0+-blue.svg" alt="macOS 13.0+">
   <img src="https://img.shields.io/badge/Swift-5.9+-orange.svg" alt="Swift 5.9+">
+  <img src="https://img.shields.io/github/v/release/lihongwen/MenustatusBar" alt="Release">
+  <img src="https://img.shields.io/github/downloads/lihongwen/MenustatusBar/total" alt="Downloads">
   <img src="https://img.shields.io/badge/Tests-115%20passing-brightgreen.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Coverage-100%25-success.svg" alt="Coverage">
 </p>
 
-一款精简、高效的 macOS 菜单栏系统监控工具，实时显示 CPU、内存、磁盘和网络使用情况。
+一款现代化、功能丰富的 macOS 菜单栏系统监控工具，实时显示 CPU、内存、磁盘和网络使用情况。支持 5 种颜色主题、4 种显示模式，完整中英文双语支持。
 
 ## ✨ 特性
 
-- 🚀 **轻量高效**: CPU 占用 < 2%, 内存占用 < 100MB
-- 📊 **实时监控**: 1-5秒可配置刷新间隔
-- 🎨 **原生设计**: SwiftUI + MenuBarExtra，完美融入 macOS
+- 🚀 **轻量高效**: CPU 占用 < 2%, 内存占用 < 30MB
+- 📊 **实时监控**: 1-10秒可配置刷新间隔，支持实时数据刷新
+- 🎨 **5种颜色主题**: 系统默认 🟢🟡🔴 / 单色 ⚪⚫⬛ / 交通灯 / 冷色调 🔵🟣 / 暖色调 🟡🟠
+- 📱 **4种显示模式**: 图标+数值 / 紧凑文本 / 图表模式 / 仅图标
+- 🌐 **多语言支持**: 完整的中英文双语支持，一键切换
+- 📋 **进程管理**: 显示前5个资源占用最高的进程
 - 🌓 **主题适配**: 自动支持浅色/深色模式
-- ⚙️ **灵活配置**: 自由选择显示的监控项目
-- 💾 **持久化设置**: 自动保存用户偏好
+- ⚙️ **灵活配置**: 自由选择显示的监控项目和顺序
+- 💾 **实时保存**: 所有设置即改即存，无需手动保存
 
 ## 📦 监控项目
 
@@ -35,6 +40,7 @@
 - 支持多磁盘选择
 - 总容量/已用/可用空间
 - 使用率百分比
+- **两种显示模式**: 容量使用 / 读写速度
 - 自动磁盘发现
 
 ### 网络监控
@@ -54,12 +60,24 @@
 
 ## 📥 安装
 
-### 方式 1: 从源码构建
+### 方式 1: DMG 安装（推荐）
+
+1. 前往 [**Releases 页面**](https://github.com/lihongwen/MenustatusBar/releases/latest)
+2. 下载最新版本的 **MenubarStatus-v1.0.0.dmg**
+3. 双击打开 DMG 文件
+4. 拖拽 `MenubarStatus.app` 到 `Applications` 文件夹
+5. 在"启动台"或"应用程序"文件夹中找到并启动
+
+### 方式 2: 直接下载
+
+[![下载 DMG](https://img.shields.io/badge/下载-MenubarStatus%20v1.0.0-blue?style=for-the-badge&logo=apple)](https://github.com/lihongwen/MenustatusBar/releases/download/v1.0.0/MenubarStatus-v1.0.0.dmg)
+
+### 方式 3: 从源码构建
 
 ```bash
 # 1. 克隆仓库
-git clone https://github.com/yourusername/memubar-status.git
-cd memubar-status/MenubarStatus
+git clone https://github.com/lihongwen/MenustatusBar.git
+cd MenustatusBar/MenubarStatus
 
 # 2. 打开 Xcode 项目
 open MenubarStatus.xcodeproj
@@ -67,10 +85,6 @@ open MenubarStatus.xcodeproj
 # 3. 选择 MenubarStatus scheme
 # 4. 点击 Run (⌘R)
 ```
-
-### 方式 2: 发布版本
-
-_待发布到 GitHub Releases_
 
 ## 🎯 使用指南
 
@@ -119,28 +133,38 @@ Network:
 
 ## ⚙️ 设置选项
 
-### 显示指标
-- ✅ **Show CPU**: 显示/隐藏 CPU 使用率
-- ✅ **Show Memory**: 显示/隐藏内存使用情况
-- ✅ **Show Disk**: 显示/隐藏磁盘使用情况
-- ✅ **Show Network**: 显示/隐藏网络速率
+### 显示设置
+- ✅ **显示指标**: 自由选择显示 CPU/内存/磁盘/网络
+- ✅ **显示模式**: 4 种显示风格
+  - **图标 + 数值**: 完整的指标信息
+  - **紧凑文本**: 节省菜单栏空间
+  - **图表模式**: 实时动态图表显示 (▁▃▅▇)
+  - **仅图标**: 极简主义设计
+- ✅ **指标顺序**: 拖拽调整指标显示顺序
+- ✅ **进程列表**: 显示前 5 个资源占用最高的进程
 
 > ⚠️ 至少需要启用一个监控项目
 
+### 外观设置
+- 🎨 **颜色主题**: 5 种精心设计的主题
+  - **系统默认**: 经典绿黄红配色 🟢🟡🔴
+  - **单色**: 简约灰度设计 ⚪⚫⬛
+  - **交通灯**: 清晰的信号灯配色 🟢🟡🔴
+  - **冷色调**: 蓝紫红渐变 🔵🟣🔴
+  - **暖色调**: 黄橙红渐变 🟡🟠🔴
+- 🌐 **界面语言**: 中文 / English
+- 💫 **紧凑模式**: 使用更短的文本格式
+
 ### 监控配置
-- **Refresh Interval**: 1-5 秒 (默认: 2秒)
+- **刷新频率**: 1-10 秒 (默认: 2秒)
   - 较低值：更实时，略微增加资源占用
   - 较高值：降低资源占用，更新较慢
+- **磁盘监控**: 选择要监控的磁盘
+- **磁盘显示**: 容量使用 / 读写速度
 
-### 磁盘监控
-- **Monitor Disk**: 选择要监控的磁盘
-- **Refresh Disk List**: 刷新已挂载磁盘列表
-
-### 启动设置
-- **Launch at Login**: 开机自动启动 _(macOS 13+)_
-
-### 显示选项
-- **Compact Mode**: 使用紧凑文本格式
+### 高级设置
+- **开机启动**: 开机自动启动 _(macOS 13+)_
+- **重置设置**: 恢复默认设置
 
 ## 🏗️ 项目结构
 
@@ -273,11 +297,14 @@ xcodebuild \
 ## 📝 待办事项
 
 - [ ] App Store 发布
-- [ ] 添加应用图标
+- [x] ✅ 添加应用图标
+- [x] ✅ 图表可视化（图表模式）
+- [x] ✅ 多语言支持（中英文）
+- [x] ✅ 颜色主题系统
+- [x] ✅ 进程列表显示
 - [ ] 支持更多监控项（GPU、温度）
 - [ ] 导出历史数据
-- [ ] 图表可视化
-- [ ] 多语言支持 (i18n)
+- [ ] 通知提醒功能
 
 ## 🤝 贡献
 
@@ -309,8 +336,32 @@ xcodebuild \
 ## 📮 联系方式
 
 - 作者: 李宏文
-- 项目主页: [GitHub](https://github.com/yourusername/memubar-status)
-- 问题反馈: [Issues](https://github.com/yourusername/memubar-status/issues)
+- 项目主页: [GitHub](https://github.com/lihongwen/MenustatusBar)
+- 问题反馈: [Issues](https://github.com/lihongwen/MenustatusBar/issues)
+- 下载地址: [Releases](https://github.com/lihongwen/MenustatusBar/releases)
+
+---
+
+## 📝 更新日志
+
+### v1.0.0 (2025-10-02)
+
+**新增功能**:
+- ✅ 5 种颜色主题系统
+- ✅ 4 种显示模式（图标+数值/紧凑/图表/仅图标）
+- ✅ 进程列表显示（前 5 个高占用进程）
+- ✅ 中英文双语支持
+- ✅ 磁盘双模式显示（容量/速度）
+- ✅ 现代化 UI 设计
+- ✅ 设置实时保存
+
+**技术优化**:
+- ✅ 主题颜色应用到 MenuBar 图标
+- ✅ 下拉菜单高度自适应
+- ✅ 图表模式实时数据
+- ✅ 完整的本地化支持
+
+[查看完整更新日志](https://github.com/lihongwen/MenustatusBar/releases)
 
 ---
 
