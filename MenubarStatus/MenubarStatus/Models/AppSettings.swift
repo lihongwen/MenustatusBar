@@ -106,6 +106,9 @@ struct AppSettings: Codable {
     // Display format preferences
     var useCompactMode: Bool
     
+    // NEW: Display configuration for modern UI
+    var displayConfiguration: DisplayConfiguration
+    
     init(
         showCPU: Bool = true,
         showMemory: Bool = true,
@@ -115,7 +118,8 @@ struct AppSettings: Codable {
         selectedDiskPath: String = "/",
         diskDisplayMode: DiskDisplayMode = .capacity,
         launchAtLogin: Bool = false,
-        useCompactMode: Bool = true
+        useCompactMode: Bool = true,
+        displayConfiguration: DisplayConfiguration = DisplayConfiguration()
     ) {
         // Ensure at least one metric is enabled
         let atLeastOne = showCPU || showMemory || showDisk || showNetwork
@@ -132,6 +136,7 @@ struct AppSettings: Codable {
         
         self.launchAtLogin = launchAtLogin
         self.useCompactMode = useCompactMode
+        self.displayConfiguration = displayConfiguration
     }
     
     // MARK: - Codable
@@ -146,6 +151,7 @@ struct AppSettings: Codable {
         case diskDisplayMode
         case launchAtLogin
         case useCompactMode
+        case displayConfiguration
     }
 }
 

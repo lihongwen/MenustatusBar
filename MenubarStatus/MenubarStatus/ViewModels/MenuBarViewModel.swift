@@ -18,6 +18,14 @@ final class MenuBarViewModel: ObservableObject {
     @Published var isMonitoring: Bool = false
     @Published var errorMessage: String?
     
+    // NEW: Process list support
+    @Published var processListViewModel: ProcessListViewModel?
+    @Published var showProcessList: Bool = false
+    
+    // NEW: Memory purge state
+    @Published var isPurgingMemory: Bool = false
+    @Published var lastPurgeResult: MemoryPurgeResult?
+    
     // MARK: - Private Properties
     
     private let monitor: SystemMonitorImpl
@@ -26,54 +34,202 @@ final class MenuBarViewModel: ObservableObject {
     
     // MARK: - Computed Properties (use settings from manager)
     
-    private var settings: AppSettings {
+    var settings: AppSettings {
         settingsManager.settings
+    }
+    
+    // NEW: Expose services for UI
+    var memoryPurger: MemoryPurging {
+        monitor.memoryPurger
+    }
+    
+    var processMonitor: ProcessMonitoring {
+        monitor.processMonitor
+    }
+    
+    var diskHealthMonitor: DiskHealthMonitoring {
+        monitor.diskHealthMonitor
+    }
+    
+    var historicalDataManager: HistoricalDataManaging {
+        monitor.historicalDataManager
     }
     
     // MARK: - Computed Properties
     
-    /// Text to display in the menubar
+    /// Text to display in the menubar - 根据 DisplayMode 改变显示方式
     var displayText: String {
         guard let metrics = currentMetrics else {
             return "---"
         }
         
+        // 🔧 FIX: 根据 Display Mode 返回不同格式
+        switch settings.displayConfiguration.displayMode {
+        case .iconAndValue:
+            return iconAndValueText(metrics: metrics)
+        case .compactText:
+            return compactText(metrics: metrics)
+        case .graphMode:
+            return graphModeText(metrics: metrics)
+        case .iconsOnly:
+            return iconsOnlyText(metrics: metrics)
+        }
+    }
+    
+    // MARK: - Display Mode Implementations
+    
+    /// Icon + Value 模式: 🖥️ 45%
+    private func iconAndValueText(metrics: SystemMetrics) -> String {
         var components: [String] = []
         
         if settings.showCPU {
-            let cpuValue = Int(metrics.cpu.usagePercentage)
-            components.append("CPU \(cpuValue)%")
+            components.append("🖥️ \(Int(metrics.cpu.usagePercentage))%")
         }
-        
         if settings.showMemory {
-            let memoryGB = Double(metrics.memory.usedBytes) / 1_000_000_000
-            components.append("Mem \(String(format: "%.1f", memoryGB))GB")
+            let memGB = Double(metrics.memory.usedBytes) / 1_073_741_824
+            components.append("💾 \(String(format: "%.1f", memGB))G")
         }
-        
         if settings.showDisk {
+            // 🔧 根据 diskDisplayMode 决定显示内容
             switch settings.diskDisplayMode {
             case .capacity:
-                let diskPercent = Int(metrics.disk.usagePercentage)
-                components.append("Disk \(diskPercent)%")
+                components.append("💿 \(Int(metrics.disk.usagePercentage))%")
             case .ioSpeed:
-                let readMBps = Double(metrics.disk.readBytesPerSecond) / 1_048_576  // MB/s
-                let writeMBps = Double(metrics.disk.writeBytesPerSecond) / 1_048_576
-                if readMBps >= 1.0 || writeMBps >= 1.0 {
-                    components.append("I/O ↓\(String(format: "%.0f", readMBps))↑\(String(format: "%.0f", writeMBps))MB/s")
-                } else {
-                    let readKBps = Double(metrics.disk.readBytesPerSecond) / 1024  // KB/s
-                    let writeKBps = Double(metrics.disk.writeBytesPerSecond) / 1024
-                    components.append("I/O ↓\(String(format: "%.0f", readKBps))↑\(String(format: "%.0f", writeKBps))KB/s")
-                }
+                let totalMB = Double(metrics.disk.totalIOBytesPerSecond) / 1_048_576
+                components.append("💿 \(String(format: "%.1f", totalMB))MB/s")
             }
         }
-        
         if settings.showNetwork {
-            let downloadMBps = Double(metrics.network.downloadBytesPerSecond) / 1_000_000
-            components.append("↓\(String(format: "%.1f", downloadMBps))MB/s")
+            let downMB = Double(metrics.network.downloadBytesPerSecond) / 1_048_576
+            components.append("🌐 ↓\(String(format: "%.1f", downMB))")
+        }
+        
+        return components.isEmpty ? "---" : components.joined(separator: "  ")
+    }
+    
+    /// Compact Text 模式: CPU 45% | Mem 8.0GB
+    private func compactText(metrics: SystemMetrics) -> String {
+        var components: [String] = []
+        
+        if settings.showCPU {
+            components.append("CPU \(Int(metrics.cpu.usagePercentage))%")
+        }
+        if settings.showMemory {
+            let memGB = Double(metrics.memory.usedBytes) / 1_073_741_824
+            components.append("Mem \(String(format: "%.1f", memGB))G")
+        }
+        if settings.showDisk {
+            // 🔧 根据 diskDisplayMode 决定显示内容
+            switch settings.diskDisplayMode {
+            case .capacity:
+                components.append("Disk \(Int(metrics.disk.usagePercentage))%")
+            case .ioSpeed:
+                let totalMB = Double(metrics.disk.totalIOBytesPerSecond) / 1_048_576
+                components.append("Disk \(String(format: "%.1f", totalMB))MB/s")
+            }
+        }
+        if settings.showNetwork {
+            let downMB = Double(metrics.network.downloadBytesPerSecond) / 1_048_576
+            components.append("Net ↓\(String(format: "%.1f", downMB))")
         }
         
         return components.isEmpty ? "---" : components.joined(separator: " | ")
+    }
+    
+    /// Graph Mode 模式: ▁▃▅▇ 表示强度
+    private func graphModeText(metrics: SystemMetrics) -> String {
+        var components: [String] = []
+        
+        if settings.showCPU {
+            let graph = getGraphBar(percentage: metrics.cpu.usagePercentage)
+            components.append("C:\(graph)")
+        }
+        if settings.showMemory {
+            let memPercent = Double(metrics.memory.usedBytes) / Double(metrics.memory.totalBytes) * 100
+            let graph = getGraphBar(percentage: memPercent)
+            components.append("M:\(graph)")
+        }
+        if settings.showDisk {
+            // 🔧 根据 diskDisplayMode 决定显示内容
+            let percentage: Double
+            switch settings.diskDisplayMode {
+            case .capacity:
+                percentage = metrics.disk.usagePercentage
+            case .ioSpeed:
+                // IO速度：最大100MB/s = 100%
+                let speedMB = Double(metrics.disk.totalIOBytesPerSecond) / 1_048_576
+                percentage = min(speedMB / 100.0 * 100, 100)
+            }
+            let graph = getGraphBar(percentage: percentage)
+            components.append("D:\(graph)")
+        }
+        if settings.showNetwork {
+            // Network 用速度来表示强度 (最大 100MB/s)
+            let speedMB = Double(metrics.network.downloadBytesPerSecond) / 1_048_576
+            let percent = min(speedMB / 10.0 * 100, 100) // 10MB/s = 100%
+            let graph = getGraphBar(percentage: percent)
+            components.append("N:\(graph)")
+        }
+        
+        return components.isEmpty ? "---" : components.joined(separator: " ")
+    }
+    
+    /// Icons Only 模式: 🟢 🟡 🔴 (颜色表示状态)
+    private func iconsOnlyText(metrics: SystemMetrics) -> String {
+        var components: [String] = []
+        
+        if settings.showCPU {
+            let icon = getColorIcon(percentage: metrics.cpu.usagePercentage)
+            components.append(icon)
+        }
+        if settings.showMemory {
+            let memPercent = Double(metrics.memory.usedBytes) / Double(metrics.memory.totalBytes) * 100
+            let icon = getColorIcon(percentage: memPercent)
+            components.append(icon)
+        }
+        if settings.showDisk {
+            // 🔧 根据 diskDisplayMode 决定显示内容
+            let percentage: Double
+            switch settings.diskDisplayMode {
+            case .capacity:
+                percentage = metrics.disk.usagePercentage
+            case .ioSpeed:
+                // IO速度：最大100MB/s = 100%
+                let speedMB = Double(metrics.disk.totalIOBytesPerSecond) / 1_048_576
+                percentage = min(speedMB / 100.0 * 100, 100)
+            }
+            let icon = getColorIcon(percentage: percentage)
+            components.append(icon)
+        }
+        if settings.showNetwork {
+            // Network 用速度表示（绿色=低，黄色=中，红色=高）
+            let speedMB = Double(metrics.network.downloadBytesPerSecond) / 1_048_576
+            let percent = min(speedMB / 10.0 * 100, 100)
+            let icon = getColorIcon(percentage: percent)
+            components.append(icon)
+        }
+        
+        return components.isEmpty ? "---" : components.joined(separator: " ")
+    }
+    
+    // MARK: - Helper Methods
+    
+    /// 根据百分比返回图形条: ▁▃▅▇
+    private func getGraphBar(percentage: Double) -> String {
+        let bars = ["▁", "▃", "▅", "▇"]
+        let index = min(Int(percentage / 25), 3)
+        return bars[index]
+    }
+    
+    /// 根据百分比返回颜色图标
+    private func getColorIcon(percentage: Double) -> String {
+        if percentage < 50 {
+            return "🟢" // 绿色 - 良好
+        } else if percentage < 80 {
+            return "🟡" // 黄色 - 警告
+        } else {
+            return "🔴" // 红色 - 危险
+        }
     }
     
     /// Detailed text for dropdown menu
@@ -129,6 +285,12 @@ final class MenuBarViewModel: ObservableObject {
         setupSubscriptions()
     }
     
+    convenience init(settings: AppSettings) {
+        let manager = SettingsManager.shared
+        let monitor = SystemMonitorImpl(settings: settings)
+        self.init(monitor: monitor, settingsManager: manager)
+    }
+    
     convenience init() {
         let manager = SettingsManager.shared
         let monitor = SystemMonitorImpl(settings: manager.settings)
@@ -140,11 +302,63 @@ final class MenuBarViewModel: ObservableObject {
     func startMonitoring() {
         monitor.start(interval: settings.refreshInterval)
         isMonitoring = true
+        
+        // Start process list if enabled
+        if settings.displayConfiguration.showTopProcesses {
+            startProcessListMonitoring()
+        }
     }
     
     func stopMonitoring() {
         monitor.stop()
         isMonitoring = false
+        
+        // Stop process list
+        processListViewModel?.stopRefreshing()
+    }
+    
+    // MARK: - NEW: Process List Methods
+    
+    func startProcessListMonitoring() {
+        if processListViewModel == nil {
+            processListViewModel = ProcessListViewModel(processMonitor: monitor.processMonitor)
+        }
+        processListViewModel?.startRefreshing(interval: settings.refreshInterval)
+        showProcessList = true
+    }
+    
+    func stopProcessListMonitoring() {
+        processListViewModel?.stopRefreshing()
+        showProcessList = false
+    }
+    
+    // MARK: - NEW: Memory Purge Methods
+    
+    func purgeMemory() async {
+        guard !isPurgingMemory else { return }
+        
+        isPurgingMemory = true
+        defer { isPurgingMemory = false }
+        
+        do {
+            let result = try await monitor.memoryPurger.purgeInactiveMemory()
+            lastPurgeResult = result
+            errorMessage = nil
+        } catch {
+            errorMessage = "Memory purge failed: \(error.localizedDescription)"
+        }
+    }
+    
+    // MARK: - NEW: Historical Data Access
+    
+    func getHistoricalData(for metric: MetricType) -> [HistoricalDataPoint] {
+        return monitor.historicalDataManager.getHistory(for: metric, duration: 60)
+    }
+    
+    // MARK: - NEW: Disk Health Access
+    
+    func getAllDiskHealth() -> [DiskHealthInfo] {
+        return monitor.diskHealthMonitor.monitorAllVolumes()
     }
     
     // MARK: - Private Methods

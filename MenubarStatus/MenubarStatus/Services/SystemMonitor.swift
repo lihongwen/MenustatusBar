@@ -20,14 +20,44 @@ class SystemMonitorImpl: ObservableObject {
     private let diskMonitor: DiskMonitorImpl
     private let networkMonitor: NetworkMonitorImpl
     
+    // NEW: Enhanced monitoring services
+    private let _processMonitor: ProcessMonitorImpl
+    private let _diskHealthMonitor: DiskHealthMonitorImpl
+    private let _historicalDataManager: HistoricalDataManagerImpl
+    
     private var timer: DispatchSourceTimer?
     private let timerQueue = DispatchQueue(label: "com.menubar.status.systemmonitor.timer", qos: .utility)
+    
+    // MARK: - Public access to specialized monitors
+    
+    var processMonitor: ProcessMonitoring {
+        return _processMonitor
+    }
+    
+    var diskHealthMonitor: DiskHealthMonitoring {
+        return _diskHealthMonitor
+    }
+    
+    var historicalDataManager: HistoricalDataManaging {
+        return _historicalDataManager
+    }
+    
+    var memoryPurger: MemoryPurging {
+        return memoryMonitor
+    }
     
     init(settings: AppSettings) {
         self.settings = settings
         self.cpuMonitor = CPUMonitorImpl()
         self.memoryMonitor = MemoryMonitorImpl()
-        self.diskMonitor = DiskMonitorImpl()
+        
+        // Initialize new services
+        self._processMonitor = ProcessMonitorImpl()
+        self._diskHealthMonitor = DiskHealthMonitorImpl()
+        self._historicalDataManager = HistoricalDataManagerImpl()
+        
+        // Initialize disk monitor with health monitoring
+        self.diskMonitor = DiskMonitorImpl(diskHealthMonitor: _diskHealthMonitor)
         self.networkMonitor = NetworkMonitorImpl()
     }
     
@@ -90,6 +120,53 @@ class SystemMonitorImpl: ObservableObject {
         await MainActor.run {
             self.currentMetrics = metrics
         }
+        
+        // Record historical data points
+        recordHistoricalData(metrics: metrics)
+    }
+    
+    // MARK: - Historical Data Recording
+    
+    private func recordHistoricalData(metrics: SystemMetrics) {
+        let timestamp = Date()
+        
+        // Record CPU usage
+        _historicalDataManager.recordDataPoint(
+            HistoricalDataPoint(
+                timestamp: timestamp,
+                metricType: .cpu,
+                value: metrics.cpu.usagePercentage
+            )
+        )
+        
+        // Record Memory usage
+        _historicalDataManager.recordDataPoint(
+            HistoricalDataPoint(
+                timestamp: timestamp,
+                metricType: .memory,
+                value: metrics.memory.usagePercentage
+            )
+        )
+        
+        // Record Disk usage
+        _historicalDataManager.recordDataPoint(
+            HistoricalDataPoint(
+                timestamp: timestamp,
+                metricType: .disk,
+                value: metrics.disk.usagePercentage
+            )
+        )
+        
+        // Record Network usage (total I/O in MB/s)
+        let totalBytesPerSecond = metrics.network.uploadBytesPerSecond + metrics.network.downloadBytesPerSecond
+        let networkValue = Double(totalBytesPerSecond) / 1_048_576.0 // Convert to MB/s
+        _historicalDataManager.recordDataPoint(
+            HistoricalDataPoint(
+                timestamp: timestamp,
+                metricType: .network,
+                value: networkValue
+            )
+        )
     }
 }
 

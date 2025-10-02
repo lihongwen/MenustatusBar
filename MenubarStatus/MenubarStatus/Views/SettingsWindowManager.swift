@@ -18,7 +18,7 @@ final class SettingsWindowManager {
     
     private init() {}
     
-    func showSettings(settingsManager: SettingsManager) {
+    func showSettings(viewModel: SettingsViewModel) {
         // If window already exists, bring it to front
         if let window = settingsWindow {
             // Make sure app appears in Dock
@@ -32,7 +32,7 @@ final class SettingsWindowManager {
         NSApp.setActivationPolicy(.regular)
         
         // Create settings view
-        let settingsView = SettingsView(settingsManager: settingsManager)
+        let settingsView = SettingsView(viewModel: viewModel)
         
         // Create hosting controller
         let hostingController = NSHostingController(rootView: settingsView)

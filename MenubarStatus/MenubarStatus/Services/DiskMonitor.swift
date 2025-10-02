@@ -8,6 +8,7 @@
 import Foundation
 import IOKit
 import IOKit.storage
+import DiskArbitration
 
 /// Disk I/O statistics tracker
 private struct DiskIOStats {
@@ -26,8 +27,21 @@ final class DiskMonitorImpl {
     // Track previous I/O stats for speed calculation
     private var previousIOStats: [String: DiskIOStats] = [:]
     
+    // Multi-disk monitoring
+    private var diskArbitrationSession: DASession?
+    private var onVolumeChange: (([DiskMetrics]) -> Void)?
+    private var diskHealthMonitor: DiskHealthMonitoring?
+    
     var isAvailable: Bool {
         return true // Disk monitoring is always available
+    }
+    
+    init(diskHealthMonitor: DiskHealthMonitoring? = nil) {
+        self.diskHealthMonitor = diskHealthMonitor
+    }
+    
+    deinit {
+        stopMonitoringVolumes()
     }
     
     func getCurrentMetrics(for volumePath: String) async throws -> DiskMetrics {
@@ -80,6 +94,78 @@ final class DiskMonitorImpl {
         return diskInfos.sorted { $0.path < $1.path }
     }
     
+    // MARK: - Multi-Disk Monitoring
+    
+    /// Start monitoring for volume mount/unmount events
+    func startMonitoringVolumes(onChange: @escaping ([DiskMetrics]) -> Void) {
+        self.onVolumeChange = onChange
+        
+        // Create DiskArbitration session
+        guard let session = DASessionCreate(kCFAllocatorDefault) else {
+            return
+        }
+        
+        self.diskArbitrationSession = session
+        DASessionSetDispatchQueue(session, DispatchQueue.main)
+        
+        // Register for disk appeared callback
+        DARegisterDiskAppearedCallback(
+            session,
+            nil,
+            { disk, context in
+                guard let monitor = context?.assumingMemoryBound(to: DiskMonitorImpl.self).pointee else {
+                    return
+                }
+                monitor.notifyVolumeChange()
+            },
+            Unmanaged.passUnretained(self).toOpaque()
+        )
+        
+        // Register for disk disappeared callback
+        DARegisterDiskDisappearedCallback(
+            session,
+            nil,
+            { disk, context in
+                guard let monitor = context?.assumingMemoryBound(to: DiskMonitorImpl.self).pointee else {
+                    return
+                }
+                monitor.notifyVolumeChange()
+            },
+            Unmanaged.passUnretained(self).toOpaque()
+        )
+        
+        // Trigger initial callback
+        notifyVolumeChange()
+    }
+    
+    /// Stop monitoring volume changes
+    func stopMonitoringVolumes() {
+        if let session = diskArbitrationSession {
+            DASessionUnscheduleFromRunLoop(session, CFRunLoopGetCurrent(), CFRunLoopMode.defaultMode.rawValue as CFString)
+            diskArbitrationSession = nil
+        }
+        onVolumeChange = nil
+    }
+    
+    /// Get metrics for all mounted volumes
+    func getAllVolumeMetrics() -> [DiskMetrics] {
+        let volumes = getAvailableVolumes()
+        var allMetrics: [DiskMetrics] = []
+        
+        for volume in volumes {
+            if let metrics = try? collectDiskMetrics(for: volume.path) {
+                allMetrics.append(metrics)
+            }
+        }
+        
+        return allMetrics
+    }
+    
+    private func notifyVolumeChange() {
+        let allMetrics = getAllVolumeMetrics()
+        onVolumeChange?(allMetrics)
+    }
+    
     private func collectDiskMetrics(for volumePath: String) throws -> DiskMetrics {
         // Check cache
         if let cached = cache[volumePath],
@@ -118,6 +204,9 @@ final class DiskMonitorImpl {
         // Get I/O statistics
         let (readSpeed, writeSpeed) = getDiskIOSpeed(for: volumePath)
         
+        // Get health info if available
+        let healthInfo = diskHealthMonitor?.getHealthInfo(forVolume: volumePath)
+        
         let metrics = DiskMetrics(
             volumePath: volumePath,
             volumeName: volumeName,
@@ -125,7 +214,8 @@ final class DiskMonitorImpl {
             freeBytes: freeBytes,
             usedBytes: usedBytes,
             readBytesPerSecond: readSpeed,
-            writeBytesPerSecond: writeSpeed
+            writeBytesPerSecond: writeSpeed,
+            healthInfo: healthInfo
         )
         
         // Update cache

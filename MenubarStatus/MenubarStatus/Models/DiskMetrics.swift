@@ -17,6 +17,9 @@ struct DiskMetrics {
     let readBytesPerSecond: UInt64   // Read speed in bytes/sec
     let writeBytesPerSecond: UInt64  // Write speed in bytes/sec
     
+    // NEW: Optional health information from S.M.A.R.T. monitoring
+    let healthInfo: DiskHealthInfo?  // May be unavailable for some volumes
+    
     init(
         volumePath: String,
         volumeName: String,
@@ -24,7 +27,8 @@ struct DiskMetrics {
         freeBytes: UInt64,
         usedBytes: UInt64,
         readBytesPerSecond: UInt64 = 0,
-        writeBytesPerSecond: UInt64 = 0
+        writeBytesPerSecond: UInt64 = 0,
+        healthInfo: DiskHealthInfo? = nil
     ) {
         // Ensure volumePath is absolute
         self.volumePath = volumePath.hasPrefix("/") ? volumePath : "/" + volumePath
@@ -37,6 +41,7 @@ struct DiskMetrics {
         self.usedBytes = usedBytes
         self.readBytesPerSecond = readBytesPerSecond
         self.writeBytesPerSecond = writeBytesPerSecond
+        self.healthInfo = healthInfo
     }
     
     /// Disk usage as percentage (0.0 - 100.0)
