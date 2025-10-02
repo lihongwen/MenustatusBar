@@ -15,9 +15,10 @@ enum ProcessSortCriteria: String, Codable, CaseIterable {
     case memory = "memory"
     
     var displayName: String {
+        let lang = LocalizedStrings.language
         switch self {
-        case .cpu: return "CPU Usage"
-        case .memory: return "Memory Usage"
+        case .cpu: return lang == .chinese ? "CPU 使用率" : "CPU Usage"
+        case .memory: return lang == .chinese ? "内存使用" : "Memory Usage"
         }
     }
 }

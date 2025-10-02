@@ -59,6 +59,9 @@ final class SettingsViewModel: ObservableObject {
         // Initialize metric order draft
         self.metricOrderDraft = settingsManager.settings.displayConfiguration.orderedMetrics
         
+        // Initialize language setting
+        LocalizedStrings.language = settingsManager.settings.language
+        
         // Discover available disks
         refreshAvailableDisks()
     }

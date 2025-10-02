@@ -21,6 +21,9 @@ struct MenubarStatusApp: App {
         
         _viewModel = StateObject(wrappedValue: viewModel)
         
+        // Initialize language
+        LocalizedStrings.language = manager.settings.language
+        
         // 🔧 FIX: 应用启动时就开始监控
         Task { @MainActor in
             // 延迟一点启动，确保UI已经初始化
@@ -39,10 +42,11 @@ struct MenubarStatusApp: App {
             // Dropdown content
             MenuBarView(viewModel: viewModel)
         } label: {
-            // Menu bar label
+            // Menu bar label - 使用主题颜色
             HStack(spacing: 4) {
                 Image(systemName: "chart.xyaxis.line")
                     .imageScale(.small)
+                    .foregroundColor(viewModel.menuBarIconColor) // 🎨 应用主题颜色
                 
                 Text(viewModel.displayText)
                     .font(.system(size: 11, design: .monospaced))

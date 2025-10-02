@@ -35,7 +35,9 @@ protocol ColorTheme {
 
 struct SystemDefaultTheme: ColorTheme {
     let identifier = "system"
-    let displayName = "System Default"
+    var displayName: String {
+        LocalizedStrings.language == .chinese ? "系统默认" : "System Default"
+    }
     
     var healthyColor: Color { .green }
     var warningColor: Color { .yellow }
@@ -69,11 +71,14 @@ struct SystemDefaultTheme: ColorTheme {
 
 struct MonochromeTheme: ColorTheme {
     let identifier = "monochrome"
-    let displayName = "Monochrome"
+    var displayName: String {
+        LocalizedStrings.language == .chinese ? "单色" : "Monochrome"
+    }
     
-    var healthyColor: Color { Color.gray.opacity(0.5) }
-    var warningColor: Color { Color.gray.opacity(0.7) }
-    var criticalColor: Color { Color.gray }
+    // 🔧 FIX: 使用更明显的灰色系，不用半透明
+    var healthyColor: Color { Color(red: 0.7, green: 0.7, blue: 0.7) } // 浅灰 - 良好
+    var warningColor: Color { Color(red: 0.5, green: 0.5, blue: 0.5) } // 中灰 - 警告
+    var criticalColor: Color { Color(red: 0.2, green: 0.2, blue: 0.2) } // 深灰 - 危险
     
     var backgroundColor: Color { Color(NSColor.windowBackgroundColor) }
     var cardBackground: Color { Color(NSColor.controlBackgroundColor) }
@@ -95,7 +100,9 @@ struct MonochromeTheme: ColorTheme {
 
 struct TrafficLightTheme: ColorTheme {
     let identifier = "traffic"
-    let displayName = "Traffic Light"
+    var displayName: String {
+        LocalizedStrings.language == .chinese ? "交通灯" : "Traffic Light"
+    }
     
     var healthyColor: Color { Color(red: 0, green: 0.8, blue: 0) }
     var warningColor: Color { Color(red: 1, green: 0.8, blue: 0) }
@@ -129,7 +136,9 @@ struct TrafficLightTheme: ColorTheme {
 
 struct CoolTheme: ColorTheme {
     let identifier = "cool"
-    let displayName = "Cool"
+    var displayName: String {
+        LocalizedStrings.language == .chinese ? "冷色调" : "Cool"
+    }
     
     var healthyColor: Color { Color(red: 0, green: 0.7, blue: 0.9) }
     var warningColor: Color { Color(red: 0.4, green: 0.6, blue: 0.9) }
@@ -163,7 +172,9 @@ struct CoolTheme: ColorTheme {
 
 struct WarmTheme: ColorTheme {
     let identifier = "warm"
-    let displayName = "Warm"
+    var displayName: String {
+        LocalizedStrings.language == .chinese ? "暖色调" : "Warm"
+    }
     
     var healthyColor: Color { Color(red: 1, green: 0.7, blue: 0.2) }
     var warningColor: Color { Color(red: 1, green: 0.5, blue: 0.2) }

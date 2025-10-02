@@ -17,11 +17,16 @@ enum DisplayMode: String, Codable, CaseIterable {
     case iconsOnly = "iconsOnly"        // Just colored icons
     
     var displayName: String {
+        let lang = LocalizedStrings.language
         switch self {
-        case .iconAndValue: return "Icon + Value"
-        case .compactText: return "Compact Text"
-        case .graphMode: return "Graph Mode"
-        case .iconsOnly: return "Icons Only"
+        case .iconAndValue: 
+            return lang == .chinese ? "图标 + 数值" : "Icon + Value"
+        case .compactText: 
+            return lang == .chinese ? "紧凑文本" : "Compact Text"
+        case .graphMode: 
+            return lang == .chinese ? "图表模式" : "Graph Mode"
+        case .iconsOnly: 
+            return lang == .chinese ? "仅图标" : "Icons Only"
         }
     }
     

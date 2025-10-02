@@ -31,6 +31,7 @@ final class MenuBarViewModel: ObservableObject {
     private let monitor: SystemMonitorImpl
     private let settingsManager: SettingsManager
     private var cancellables = Set<AnyCancellable>()
+    private let themeManager = ThemeManager.shared
     
     // MARK: - Computed Properties (use settings from manager)
     
@@ -221,14 +222,82 @@ final class MenuBarViewModel: ObservableObject {
         return bars[index]
     }
     
-    /// 根据百分比返回颜色图标
+    /// 根据百分比和主题返回颜色图标符号
+    /// 使用 emoji 彩色圆点，在所有系统上都能正确显示
     private func getColorIcon(percentage: Double) -> String {
-        if percentage < 50 {
-            return "🟢" // 绿色 - 良好
+        let theme = themeManager.currentTheme
+        
+        // 🔧 FIX: 使用可靠的 emoji 圆点，根据主题调整符号风格
+        switch theme.identifier {
+        case "monochrome":
+            // 单色主题：使用灰色系 emoji 圆点（更清晰可见）
+            if percentage < 60 {
+                return "⚪" // 白色圆点 - 良好
+            } else if percentage < 80 {
+                return "⚫" // 灰色圆点 - 警告
+            } else {
+                return "⬛" // 黑色方块 - 危险
+            }
+            
+        case "traffic":
+            // 交通灯主题：使用标准 emoji 颜色圆点（最清晰）
+            if percentage < 60 {
+                return "🟢" // 绿色圆点 - 良好
+            } else if percentage < 80 {
+                return "🟡" // 黄色圆点 - 警告
+            } else {
+                return "🔴" // 红色圆点 - 危险
+            }
+            
+        case "cool":
+            // 冷色调：使用蓝色系 emoji
+            if percentage < 60 {
+                return "🔵" // 蓝色圆点 - 良好
+            } else if percentage < 80 {
+                return "🟣" // 紫色圆点 - 警告
+            } else {
+                return "🔴" // 红色圆点 - 危险
+            }
+            
+        case "warm":
+            // 暖色调：使用暖色系 emoji
+            if percentage < 60 {
+                return "🟡" // 黄色圆点 - 良好
+            } else if percentage < 80 {
+                return "🟠" // 橙色圆点 - 警告
+            } else {
+                return "🔴" // 红色圆点 - 危险
+            }
+            
+        default:
+            // 系统默认：使用标准交通灯配色（最通用）
+            if percentage < 60 {
+                return "🟢" // 绿色圆点 - 良好
+            } else if percentage < 80 {
+                return "🟡" // 黄色圆点 - 警告
+            } else {
+                return "🔴" // 红色圆点 - 危险
+            }
+        }
+    }
+    
+    /// 获取当前指标的颜色（用于 MenuBar 图标着色）
+    var menuBarIconColor: Color {
+        guard let metrics = currentMetrics else {
+            return .secondary
+        }
+        
+        let theme = themeManager.currentTheme
+        
+        // 使用 CPU 作为主要指标来决定颜色
+        let percentage = metrics.cpu.usagePercentage
+        
+        if percentage < 60 {
+            return theme.healthyColor
         } else if percentage < 80 {
-            return "🟡" // 黄色 - 警告
+            return theme.warningColor
         } else {
-            return "🔴" // 红色 - 危险
+            return theme.criticalColor
         }
     }
     

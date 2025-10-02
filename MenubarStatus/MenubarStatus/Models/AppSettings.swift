@@ -13,11 +13,12 @@ enum DiskDisplayMode: String, Codable, CaseIterable {
     case ioSpeed = "ioSpeed"    // Show read/write speed
     
     var displayName: String {
+        let lang = LocalizedStrings.language
         switch self {
         case .capacity:
-            return "Capacity Usage"
+            return lang == .chinese ? "容量使用" : "Capacity Usage"
         case .ioSpeed:
-            return "Read/Write Speed"
+            return lang == .chinese ? "读写速度" : "Read/Write Speed"
         }
     }
 }
@@ -109,6 +110,9 @@ struct AppSettings: Codable {
     // NEW: Display configuration for modern UI
     var displayConfiguration: DisplayConfiguration
     
+    // Language preference
+    var language: AppLanguage
+    
     init(
         showCPU: Bool = true,
         showMemory: Bool = true,
@@ -119,7 +123,8 @@ struct AppSettings: Codable {
         diskDisplayMode: DiskDisplayMode = .capacity,
         launchAtLogin: Bool = false,
         useCompactMode: Bool = true,
-        displayConfiguration: DisplayConfiguration = DisplayConfiguration()
+        displayConfiguration: DisplayConfiguration = DisplayConfiguration(),
+        language: AppLanguage = .english
     ) {
         // Ensure at least one metric is enabled
         let atLeastOne = showCPU || showMemory || showDisk || showNetwork
@@ -137,6 +142,7 @@ struct AppSettings: Codable {
         self.launchAtLogin = launchAtLogin
         self.useCompactMode = useCompactMode
         self.displayConfiguration = displayConfiguration
+        self.language = language
     }
     
     // MARK: - Codable
@@ -152,6 +158,7 @@ struct AppSettings: Codable {
         case launchAtLogin
         case useCompactMode
         case displayConfiguration
+        case language
     }
 }
 

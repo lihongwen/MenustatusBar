@@ -14,30 +14,35 @@ struct MenuBarView: View {
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
-        // 🔧 FIX: 移除 ScrollView，让所有内容一次性显示
-        VStack(spacing: 16) {
-            // MARK: - Header
-            headerView
-                .transition(.opacity.combined(with: .move(edge: .top)))
-                .animation(AnimationProvider.smoothTransition, value: viewModel.isMonitoring)
-            
-            // MARK: - Metrics
-            if let metrics = viewModel.currentMetrics {
-                metricsSection(metrics: metrics)
-                    .transition(.opacity.combined(with: .scale(scale: 0.95)))
-                    .animation(AnimationProvider.smoothTransition, value: metrics.timestamp)
-            } else {
-                loadingView
-                    .transition(.opacity)
-                    .animation(AnimationProvider.quickFade, value: viewModel.currentMetrics == nil)
+        // 🔧 FIX: 添加 ScrollView 并限制最大高度为半个屏幕
+        let maxHeight = (NSScreen.main?.visibleFrame.height ?? 900) / 2
+        
+        ScrollView(.vertical, showsIndicators: true) {
+            VStack(spacing: 16) {
+                // MARK: - Header
+                headerView
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+                    .animation(AnimationProvider.smoothTransition, value: viewModel.isMonitoring)
+                
+                // MARK: - Metrics
+                if let metrics = viewModel.currentMetrics {
+                    metricsSection(metrics: metrics)
+                        .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                        .animation(AnimationProvider.smoothTransition, value: metrics.timestamp)
+                } else {
+                    loadingView
+                        .transition(.opacity)
+                        .animation(AnimationProvider.quickFade, value: viewModel.currentMetrics == nil)
+                }
+                
+                // MARK: - Quick Actions
+                actionsView
+                    .transition(.opacity.combined(with: .move(edge: .bottom)))
             }
-            
-            // MARK: - Quick Actions
-            actionsView
-                .transition(.opacity.combined(with: .move(edge: .bottom)))
+            .padding(16)
         }
-        .padding(16)
         .frame(width: 360)
+        .frame(maxHeight: maxHeight)
         .background(vibrancyBackground)
         .colorTheme(themeManager.currentTheme)
     }
@@ -70,15 +75,15 @@ struct MenuBarView: View {
                     .foregroundColor(.accentColor)
                 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("System Monitor")
+                    Text(LocalizedStrings.systemMonitor)
                         .font(.headline)
                     
                     if let metrics = viewModel.currentMetrics {
-                        Text("Updated \(formatRelativeTime(metrics.timestamp))")
+                        Text("\(LocalizedStrings.updated) \(formatRelativeTime(metrics.timestamp))")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     } else {
-                        Text("Initializing...")
+                        Text(LocalizedStrings.initializing)
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -89,8 +94,8 @@ struct MenuBarView: View {
                 Circle()
                     .fill(viewModel.isMonitoring ? Color.green : Color.gray)
                     .frame(width: 8, height: 8)
-                    .help("Monitoring status: \(viewModel.isMonitoring ? "Active" : "Inactive")") // T072: Tooltip
-                    .accessibilityLabel(viewModel.isMonitoring ? "Monitoring active" : "Monitoring inactive") // T089: Accessibility
+                    .help("\(LocalizedStrings.monitoringStatus): \(viewModel.isMonitoring ? LocalizedStrings.active : LocalizedStrings.inactive)") // T072: Tooltip
+                    .accessibilityLabel(viewModel.isMonitoring ? LocalizedStrings.monitoringActive : LocalizedStrings.monitoringInactive) // T089: Accessibility
             }
         }
         .padding(12)
@@ -107,27 +112,97 @@ struct MenuBarView: View {
         memoryMetricView(memory: metrics.memory)
         diskMetricView(disk: metrics.disk)
         networkMetricView(network: metrics.network)
+        
+        // 🔧 FIX: 显示进程列表（如果在设置中启用）
+        if viewModel.settings.displayConfiguration.showTopProcesses,
+           let processVM = viewModel.processListViewModel {
+            processListSection(processVM: processVM)
+        }
+    }
+    
+    // MARK: - Process List Section
+    
+    private func processListSection(processVM: ProcessListViewModel) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Image(systemName: "list.bullet.rectangle")
+                    .foregroundColor(.blue)
+                Text(LocalizedStrings.processList)
+                    .font(.headline)
+                Spacer()
+            }
+            
+            Divider()
+            
+            if processVM.topProcesses.isEmpty {
+                Text(LocalizedStrings.loading)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, 8)
+            } else {
+                VStack(spacing: 4) {
+                    ForEach(processVM.topProcesses.prefix(5)) { process in
+                        processRowView(process: process)
+                    }
+                }
+            }
+        }
+        .padding(12)
+        .background(modernCardBackground)
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+    }
+    
+    private func processRowView(process: ProcessInfo) -> some View {
+        HStack(spacing: 8) {
+            if let icon = process.icon {
+                Image(nsImage: icon)
+                    .resizable()
+                    .frame(width: 20, height: 20)
+            } else {
+                Image(systemName: "app.fill")
+                    .frame(width: 20, height: 20)
+                    .foregroundColor(.secondary)
+            }
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(process.name)
+                    .font(.caption)
+                    .lineLimit(1)
+                Text("CPU: \(String(format: "%.1f%%", process.cpuUsage)) · \(process.formattedMemory)")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
+            
+            Spacer()
+        }
+        .padding(.vertical, 4)
     }
     
     // MARK: - CPU Metric
     
     private func cpuMetricView(cpu: CPUMetrics) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        let theme = themeManager.currentTheme
+        let metricColor = getColorForPercentage(cpu.usagePercentage, theme: theme)
+        
+        return VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Image(systemName: "cpu")
-                    .foregroundColor(.blue)
-                    .help("CPU Usage") // T072: Tooltip
-                Text("CPU")
+                    .foregroundColor(metricColor)
+                    .help(LocalizedStrings.cpuUsage) // T072: Tooltip
+                Text(LocalizedStrings.cpu)
                     .font(.headline)
                 Spacer()
                 Text(String(format: "%.1f%%", cpu.usagePercentage))
                     .font(.headline)
                     .monospacedDigit()
+                    .foregroundColor(metricColor)
                     .help("Current CPU usage: \(String(format: "%.1f%%", cpu.usagePercentage))") // T072: Tooltip
             }
             
             ProgressView(value: cpu.usagePercentage / 100.0)
-                .tint(.blue)
+                .tint(metricColor)
                 .animation(AnimationProvider.smoothTransition, value: cpu.usagePercentage) // T070: Animate value changes
                 .accessibilityLabel("CPU usage: \(String(format: "%.1f", cpu.usagePercentage)) percent") // T089: Accessibility
             
@@ -146,22 +221,27 @@ struct MenuBarView: View {
     // MARK: - Memory Metric
     
     private func memoryMetricView(memory: MemoryMetrics) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        let theme = themeManager.currentTheme
+        let percentage = Double(memory.usedBytes) / Double(memory.totalBytes) * 100
+        let metricColor = getColorForPercentage(percentage, theme: theme)
+        
+        return VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Image(systemName: "memorychip")
-                    .foregroundColor(.green)
-                    .help("Memory Usage") // T072: Tooltip
-                Text("Memory")
+                    .foregroundColor(metricColor)
+                    .help(LocalizedStrings.memoryUsage) // T072: Tooltip
+                Text(LocalizedStrings.memory)
                     .font(.headline)
                 Spacer()
                 Text(formatMemory(memory.usedBytes))
                     .font(.headline)
                     .monospacedDigit()
+                    .foregroundColor(metricColor)
                     .help("\(formatMemory(memory.usedBytes)) of \(formatMemory(memory.totalBytes)) used") // T072: Tooltip
             }
             
             ProgressView(value: Double(memory.usedBytes) / Double(memory.totalBytes))
-                .tint(.green)
+                .tint(metricColor)
                 .animation(AnimationProvider.smoothTransition, value: memory.usedBytes) // T070: Animate value changes
                 .accessibilityLabel("Memory usage: \(formatMemory(memory.usedBytes)) of \(formatMemory(memory.totalBytes))") // T089: Accessibility
             
@@ -184,22 +264,26 @@ struct MenuBarView: View {
     // MARK: - Disk Metric
     
     private func diskMetricView(disk: DiskMetrics) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        let theme = themeManager.currentTheme
+        let metricColor = getColorForPercentage(disk.usagePercentage, theme: theme)
+        
+        return VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Image(systemName: "internaldrive")
-                    .foregroundColor(.orange)
+                    .foregroundColor(metricColor)
                     .help("Disk Usage for \(disk.volumeName)") // T072: Tooltip
-                Text("Disk")
+                Text(LocalizedStrings.disk)
                     .font(.headline)
                 Spacer()
                 Text(String(format: "%.1f%%", disk.usagePercentage))
                     .font(.headline)
                     .monospacedDigit()
+                    .foregroundColor(metricColor)
                     .help("Disk usage: \(String(format: "%.1f%%", disk.usagePercentage))") // T072: Tooltip
             }
             
             ProgressView(value: disk.usagePercentage / 100.0)
-                .tint(.orange)
+                .tint(metricColor)
                 .animation(AnimationProvider.smoothTransition, value: disk.usagePercentage) // T070: Animate value changes
                 .accessibilityLabel("Disk usage: \(String(format: "%.1f", disk.usagePercentage)) percent") // T089: Accessibility
             
@@ -223,12 +307,14 @@ struct MenuBarView: View {
     // MARK: - Network Metric
     
     private func networkMetricView(network: NetworkMetrics) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        let theme = themeManager.currentTheme
+        
+        return VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Image(systemName: "network")
-                    .foregroundColor(.purple)
-                    .help("Network Activity") // T072: Tooltip
-                Text("Network")
+                    .foregroundColor(theme.accentColor)
+                    .help(LocalizedStrings.networkActivity) // T072: Tooltip
+                Text(LocalizedStrings.network)
                     .font(.headline)
                 Spacer()
             }
@@ -401,6 +487,22 @@ struct MenuBarView: View {
             let formatter = DateFormatter()
             formatter.timeStyle = .short
             return formatter.string(from: date)
+        }
+    }
+    
+    // MARK: - Theme Color Helper
+    
+    /// 根据百分比和主题返回对应的颜色
+    /// - 0-59%: 健康（绿色/主题健康色）
+    /// - 60-79%: 警告（黄色/主题警告色）
+    /// - 80-100%: 严重（红色/主题严重色）
+    private func getColorForPercentage(_ percentage: Double, theme: ColorTheme) -> Color {
+        if percentage < 60 {
+            return theme.healthyColor
+        } else if percentage < 80 {
+            return theme.warningColor
+        } else {
+            return theme.criticalColor
         }
     }
 }

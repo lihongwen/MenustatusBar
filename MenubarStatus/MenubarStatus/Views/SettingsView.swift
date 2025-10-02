@@ -11,14 +11,25 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject var viewModel: SettingsViewModel
     @State private var selectedTab: SettingsTab = .display
+    @State private var showLanguageChangeAlert = false
+    @State private var pendingLanguage: AppLanguage?
     
     enum SettingsTab: String, CaseIterable, Identifiable {
-        case display = "Display"
-        case appearance = "Appearance"
-        case monitoring = "Monitoring"
-        case advanced = "Advanced"
+        case display
+        case appearance
+        case monitoring
+        case advanced
         
-        var id: String { rawValue }
+        var id: String { self.rawValue }
+        
+        var displayName: String {
+            switch self {
+            case .display: return LocalizedStrings.display
+            case .appearance: return LocalizedStrings.appearance
+            case .monitoring: return LocalizedStrings.monitoring
+            case .advanced: return LocalizedStrings.advanced
+            }
+        }
         
         var icon: String {
             switch self {
@@ -33,9 +44,9 @@ struct SettingsView: View {
     var body: some View {
         VStack(spacing: 0) {
             // Tab Bar
-            Picker("Settings Tab", selection: $selectedTab) {
+            Picker(LocalizedStrings.settings, selection: $selectedTab) {
                 ForEach(SettingsTab.allCases) { tab in
-                    Label(tab.rawValue, systemImage: tab.icon)
+                    Label(tab.displayName, systemImage: tab.icon)
                         .tag(tab)
                 }
             }
@@ -65,14 +76,14 @@ struct SettingsView: View {
             
             // Action Buttons
             HStack {
-                Button("Reset to Defaults") {
+                Button(LocalizedStrings.resetToDefaults) {
                     viewModel.resetToDefaults()
                 }
-                .help("Restore default settings")
+                .help(LocalizedStrings.restoreDefaults)
                 
                 Spacer()
                 
-                Button("Close") {
+                Button(LocalizedStrings.close) {
                     NSApplication.shared.keyWindow?.close()
                 }
                 .keyboardShortcut(.defaultAction)
@@ -80,33 +91,89 @@ struct SettingsView: View {
             .padding()
         }
         .frame(width: 600, height: 500)
+        .alert(LocalizedStrings.restartApplicationTitle, isPresented: $showLanguageChangeAlert) {
+            Button(LocalizedStrings.cancel, role: .cancel) {
+                pendingLanguage = nil
+            }
+            Button(LocalizedStrings.restartNow) {
+                if let newLanguage = pendingLanguage {
+                    applyLanguageAndRestart(newLanguage)
+                }
+            }
+        } message: {
+            Text(LocalizedStrings.restartApplicationMessage)
+        }
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func applyLanguageAndRestart(_ newLanguage: AppLanguage) {
+        // 保存语言设置
+        var newSettings = viewModel.settings
+        newSettings.language = newLanguage
+        viewModel.settings = newSettings
+        
+        // 重启应用
+        restartApplication()
+    }
+    
+    private func restartApplication() {
+        // 获取应用路径
+        let appPath = Bundle.main.bundlePath
+        
+        // 使用 bash 脚本延迟重启
+        let script = """
+        #!/bin/bash
+        sleep 0.5
+        open "\(appPath)"
+        """
+        
+        // 写入临时脚本
+        let tempScript = NSTemporaryDirectory() + "restart_menubar_status.sh"
+        try? script.write(toFile: tempScript, atomically: true, encoding: .utf8)
+        
+        // 设置执行权限
+        let chmod = Process()
+        chmod.launchPath = "/bin/chmod"
+        chmod.arguments = ["+x", tempScript]
+        try? chmod.run()
+        chmod.waitUntilExit()
+        
+        // 启动脚本
+        let bash = Process()
+        bash.launchPath = "/bin/bash"
+        bash.arguments = [tempScript]
+        try? bash.run()
+        
+        // 退出当前应用
+        NSApplication.shared.terminate(nil)
     }
     
     // MARK: - Display Tab
     
     private var displayTab: some View {
         Form {
-            Section(header: Text("Metrics Visibility")) {
-                Toggle("Show CPU", isOn: Binding(
+            Section(header: Text(LocalizedStrings.metricsVisibility)) {
+                Toggle(LocalizedStrings.showCPU, isOn: Binding(
                     get: { viewModel.settings.showCPU },
                     set: { viewModel.settings.showCPU = $0 }
                 ))
-                Toggle("Show Memory", isOn: Binding(
+                Toggle(LocalizedStrings.showMemory, isOn: Binding(
                     get: { viewModel.settings.showMemory },
                     set: { viewModel.settings.showMemory = $0 }
                 ))
-                Toggle("Show Disk", isOn: Binding(
+                Toggle(LocalizedStrings.showDisk, isOn: Binding(
                     get: { viewModel.settings.showDisk },
                     set: { viewModel.settings.showDisk = $0 }
                 ))
-                Toggle("Show Network", isOn: Binding(
+                Toggle(LocalizedStrings.showNetwork, isOn: Binding(
                     get: { viewModel.settings.showNetwork },
                     set: { viewModel.settings.showNetwork = $0 }
                 ))
             }
             
-            Section(header: Text("Display Mode")) {
-                Picker("Mode:", selection: Binding(
+            Section(header: Text(LocalizedStrings.displayMode)) {
+                Picker(LocalizedStrings.mode, selection: Binding(
                     get: { viewModel.settings.displayConfiguration.displayMode },
                     set: { 
                         var config = viewModel.settings.displayConfiguration
@@ -120,28 +187,28 @@ struct SettingsView: View {
                 }
                 .pickerStyle(.radioGroup)
                 
-                Text("Changes the menubar display style")
+                Text(LocalizedStrings.changesMenubarStyle)
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
             
-            Section(header: Text("Metric Order")) {
+            Section(header: Text(LocalizedStrings.metricOrder)) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Drag to reorder metrics:")
+                    Text(LocalizedStrings.dragToReorder)
                         .font(.subheadline)
                     
                     metricReorderingList
                 }
             }
             
-            Section(header: Text("Process List")) {
-                Toggle("Show Top Processes", isOn: Binding(
+            Section(header: Text(LocalizedStrings.processList)) {
+                Toggle(LocalizedStrings.showTopProcesses, isOn: Binding(
                     get: { viewModel.settings.displayConfiguration.showTopProcesses },
                     set: { _ in viewModel.toggleShowTopProcesses() }
                 ))
                 
                 if viewModel.settings.displayConfiguration.showTopProcesses {
-                    Picker("Sort by:", selection: Binding(
+                    Picker(LocalizedStrings.sortBy, selection: Binding(
                         get: {
                             ProcessSortCriteria(rawValue: viewModel.settings.displayConfiguration.processSortCriteria) ?? .cpu
                         },
@@ -199,9 +266,9 @@ struct SettingsView: View {
     
     private var appearanceTab: some View {
         Form {
-            Section(header: Text("Color Theme")) {
+            Section(header: Text(LocalizedStrings.colorTheme)) {
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Select Theme:")
+                    Text(LocalizedStrings.theme)
                         .font(.subheadline)
                     
                     ForEach(viewModel.availableThemes, id: \.identifier) { theme in
@@ -211,11 +278,37 @@ struct SettingsView: View {
             }
             
             Section(header: Text("Display Options")) {
-                Toggle("Compact Mode", isOn: Binding(
+                Toggle(LocalizedStrings.compactMode, isOn: Binding(
                     get: { viewModel.settings.useCompactMode },
                     set: { viewModel.settings.useCompactMode = $0 }
                 ))
-                    .help("Use shorter text format in menu bar")
+                    .help(LocalizedStrings.useCompactDisplay)
+            }
+            
+            Section(header: Text("Language")) {
+                Picker("Interface Language:", selection: Binding(
+                    get: { viewModel.settings.language },
+                    set: { newLanguage in
+                        // 只有当语言真的改变时才显示确认对话框
+                        if newLanguage != viewModel.settings.language {
+                            pendingLanguage = newLanguage
+                            showLanguageChangeAlert = true
+                        }
+                    }
+                )) {
+                    ForEach(AppLanguage.allCases, id: \.rawValue) { lang in
+                        Text(lang.nativeName).tag(lang)
+                    }
+                }
+                .pickerStyle(.radioGroup)
+                
+                Text(LocalizedStrings.languageDescription)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                
+                Text(LocalizedStrings.willRestartAutomatically)
+                    .font(.caption)
+                    .foregroundColor(.blue)
             }
         }
         .formStyle(.grouped)
@@ -225,12 +318,12 @@ struct SettingsView: View {
     
     private var monitoringTab: some View {
         Form {
-            Section(header: Text("Refresh Interval")) {
+            Section(header: Text(LocalizedStrings.refreshSettings)) {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
-                        Text("Update every:")
+                        Text(LocalizedStrings.refreshInterval)
                         Spacer()
-                        Text(String(format: "%.1f seconds", viewModel.settings.refreshInterval))
+                        Text(String(format: "%.1f \(LocalizedStrings.seconds)", viewModel.settings.refreshInterval))
                             .foregroundColor(.secondary)
                     }
                     
@@ -243,15 +336,10 @@ struct SettingsView: View {
                         step: 0.5
                     )
                     
-                    Text("Lower values provide more frequent updates but may use more resources")
+                    Text(LocalizedStrings.refreshDescription)
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
-            }
-            
-            Section(header: Text("Thresholds")) {
-                Text("Configure alert thresholds (Future feature)")
-                    .foregroundColor(.secondary)
             }
         }
         .formStyle(.grouped)
@@ -261,8 +349,8 @@ struct SettingsView: View {
     
     private var advancedTab: some View {
         Form {
-            Section(header: Text("Disk Selection")) {
-                Picker("Monitor Disk:", selection: Binding(
+            Section(header: Text(LocalizedStrings.diskPaths)) {
+                Picker(LocalizedStrings.selectedDisk, selection: Binding(
                     get: { viewModel.settings.selectedDiskPath },
                     set: { viewModel.settings.selectedDiskPath = $0 }
                 )) {
@@ -271,14 +359,14 @@ struct SettingsView: View {
                     }
                 }
                 
-                Button("Refresh Disk List") {
+                Button(LocalizedStrings.scanDisks) {
                     viewModel.refreshAvailableDisks()
                 }
-                .help("Scan for newly mounted disks")
+                .help(LocalizedStrings.scanForNewDisks)
                 
                 Divider()
                 
-                Picker("Display Mode:", selection: Binding(
+                Picker("\(LocalizedStrings.displayMode):", selection: Binding(
                     get: { viewModel.settings.diskDisplayMode },
                     set: { 
                         // 🔧 FIX: 触发保存和更新
@@ -294,21 +382,16 @@ struct SettingsView: View {
                 .pickerStyle(.radioGroup)
             }
             
-            Section(header: Text("Network Interfaces")) {
-                Text("Auto-detect active network interface")
+            Section(header: Text(LocalizedStrings.networkInterfaces)) {
+                Text(LocalizedStrings.autoDetectInterface)
                     .foregroundColor(.secondary)
             }
             
-            Section(header: Text("Startup")) {
-                Toggle("Launch at Login", isOn: Binding(
+            Section(header: Text(LocalizedStrings.startup)) {
+                Toggle(LocalizedStrings.launchAtLogin, isOn: Binding(
                     get: { viewModel.settings.launchAtLogin },
                     set: { viewModel.settings.launchAtLogin = $0 }
                 ))
-                    .help("Automatically start MenubarStatus when you log in")
-                
-                Text("Note: You may need to grant permissions in System Settings > Login Items")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
             }
         }
         .formStyle(.grouped)
