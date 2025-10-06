@@ -48,7 +48,7 @@ struct MetricCard: View {
         VStack(spacing: 0) {
             // Header - Always visible
             Button(action: onToggleExpand) {
-                HStack(spacing: 12) {
+                HStack(spacing: UIStyleConfiguration.spacingM) {
                     // Icon
                     Image(systemName: icon)
                         .font(.system(size: 20))
@@ -59,7 +59,7 @@ struct MetricCard: View {
                                 .fill(sparklineColor.opacity(0.15))
                         )
                     
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: UIStyleConfiguration.spacingXS) {
                         // Title
                         Text(title)
                             .font(.system(size: 13, weight: .semibold))
@@ -87,8 +87,8 @@ struct MetricCard: View {
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(.secondary)
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
+                .padding(.horizontal, UIStyleConfiguration.spacingM)
+                .padding(.vertical, UIStyleConfiguration.spacingM)
             }
             .buttonStyle(.plain)
             
@@ -98,24 +98,24 @@ struct MetricCard: View {
                 color: sparklineColor,
                 height: 24
             )
-            .padding(.horizontal, 16)
-            .padding(.bottom, 8)
+            .padding(.horizontal, UIStyleConfiguration.spacingM)
+            .padding(.bottom, UIStyleConfiguration.spacingS)
             
             // Expanded details
             if isExpanded, let content = detailContent {
                 Divider()
-                    .padding(.horizontal, 16)
+                    .padding(.horizontal, UIStyleConfiguration.spacingM)
                 
                 content
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
+                    .padding(.horizontal, UIStyleConfiguration.spacingM)
+                    .padding(.vertical, UIStyleConfiguration.spacingM)
                     .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
         .background(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: UIStyleConfiguration.cornerRadiusL)
                 .fill(Color(NSColor.controlBackgroundColor))
-                .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+                .shadow(color: UIStyleConfiguration.cardShadow, radius: 2, x: 0, y: 1)
         )
         .animation(AnimationProvider.cardExpansion, value: isExpanded)
     }

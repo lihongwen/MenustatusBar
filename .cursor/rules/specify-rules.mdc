@@ -6,6 +6,8 @@ Auto-generated from all feature plans. Last updated: 2025-10-02
 - Swift 5.9+ (macOS native) (001-mac-menubar-cpu)
 - Swift 5.9+ (SwiftUI) + SwiftUI, AppKit (for menubar integration), Foundation, IOKit (for S.M.A.R.T. data), Charts (for sparklines) (002-ui-menubar-ui)
 - UserDefaults for preferences, in-memory for historical data (60s retention) (002-ui-menubar-ui)
+- Swift 5.9+ + SwiftUI, AppKit, Combine (003-menubar-ui-menubar)
+- UserDefaults for settings persistence (003-menubar-ui-menubar)
 
 ## Project Structure
 ```
@@ -20,6 +22,7 @@ tests/
 Swift 5.9+ (macOS native): Follow standard conventions
 
 ## Recent Changes
+- 003-menubar-ui-menubar: Added Swift 5.9+ + SwiftUI, AppKit, Combine
 - 002-ui-menubar-ui: Added Swift 5.9+ (SwiftUI) + SwiftUI, AppKit (for menubar integration), Foundation, IOKit (for S.M.A.R.T. data), Charts (for sparklines)
 - 001-mac-menubar-cpu: Added Swift 5.9+ (macOS native)
 

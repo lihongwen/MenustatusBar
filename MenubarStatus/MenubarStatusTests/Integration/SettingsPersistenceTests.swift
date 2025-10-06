@@ -82,10 +82,8 @@ final class SettingsPersistenceTests: XCTestCase {
         viewModel1.settings.showMemory = true
         viewModel1.settings.showDisk = true
         
-        // 2. Save
-        try await viewModel1.saveSettings()
-        
-        // Small delay
+        // 2. Settings auto-save via @Published
+        // Small delay to ensure save completes
         try await Task.sleep(nanoseconds: 200_000_000) // 0.2s
         
         // 3. Create new ViewModel (should load saved settings)
@@ -165,17 +163,12 @@ final class SettingsPersistenceTests: XCTestCase {
         
         let testViewModel = SettingsViewModel()
         
-        // Perform a save
+        // Perform a save (auto-saved via @Published)
         testViewModel.settings.refreshInterval = 3.5
         testViewModel.settings.showDisk = true
-        try await testViewModel.saveSettings()
         
         // Wait for save to complete
         try await Task.sleep(nanoseconds: 300_000_000) // 0.3s
-        
-        // Verify save worked
-        XCTAssertFalse(testViewModel.isSaving,
-                      "Should not be saving after save completes")
         
         // Settings should be within valid range
         XCTAssertGreaterThanOrEqual(testViewModel.settings.refreshInterval, 1.0)

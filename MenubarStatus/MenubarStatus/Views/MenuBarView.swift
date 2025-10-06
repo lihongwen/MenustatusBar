@@ -18,7 +18,7 @@ struct MenuBarView: View {
         let maxHeight = (NSScreen.main?.visibleFrame.height ?? 900) / 2
         
         ScrollView(.vertical, showsIndicators: true) {
-            VStack(spacing: 16) {
+            VStack(spacing: UIStyleConfiguration.spacingM) {
                 // MARK: - Header
                 headerView
                     .transition(.opacity.combined(with: .move(edge: .top)))
@@ -39,7 +39,7 @@ struct MenuBarView: View {
                 actionsView
                     .transition(.opacity.combined(with: .move(edge: .bottom)))
             }
-            .padding(16)
+            .padding(UIStyleConfiguration.spacingM)
         }
         .frame(width: 360)
         .frame(maxHeight: maxHeight)
@@ -68,7 +68,7 @@ struct MenuBarView: View {
     // MARK: - Header
     
     private var headerView: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: UIStyleConfiguration.spacingS) {
             HStack {
                 Image(systemName: "desktopcomputer")
                     .font(.title2)
@@ -98,10 +98,10 @@ struct MenuBarView: View {
                     .accessibilityLabel(viewModel.isMonitoring ? LocalizedStrings.monitoringActive : LocalizedStrings.monitoringInactive) // T089: Accessibility
             }
         }
-        .padding(12)
-        .background(modernCardBackground) // T071: Modern styling
-        .cornerRadius(12) // T071: Increased corner radius
-        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2) // T071: Subtle shadow
+        .padding(UIStyleConfiguration.spacingM)
+        .background(modernCardBackground)
+        .cornerRadius(UIStyleConfiguration.cornerRadiusL)
+        .shadow(color: UIStyleConfiguration.cardShadow, radius: UIStyleConfiguration.cardShadowRadius, x: 0, y: UIStyleConfiguration.cardShadowY)
     }
     
     // MARK: - Metrics Section
@@ -123,7 +123,7 @@ struct MenuBarView: View {
     // MARK: - Process List Section
     
     private func processListSection(processVM: ProcessListViewModel) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: UIStyleConfiguration.spacingS) {
             HStack {
                 Image(systemName: "list.bullet.rectangle")
                     .foregroundColor(.blue)
@@ -139,23 +139,23 @@ struct MenuBarView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.vertical, 8)
+                    .padding(.vertical, UIStyleConfiguration.spacingS)
             } else {
-                VStack(spacing: 4) {
+                VStack(spacing: UIStyleConfiguration.spacingXS) {
                     ForEach(processVM.topProcesses.prefix(5)) { process in
                         processRowView(process: process)
                     }
                 }
             }
         }
-        .padding(12)
+        .padding(UIStyleConfiguration.spacingM)
         .background(modernCardBackground)
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+        .cornerRadius(UIStyleConfiguration.cornerRadiusL)
+        .shadow(color: UIStyleConfiguration.cardShadow, radius: UIStyleConfiguration.cardShadowRadius, x: 0, y: UIStyleConfiguration.cardShadowY)
     }
     
     private func processRowView(process: ProcessInfo) -> some View {
-        HStack(spacing: 8) {
+        HStack(spacing: UIStyleConfiguration.spacingS) {
             if let icon = process.icon {
                 Image(nsImage: icon)
                     .resizable()
@@ -177,7 +177,7 @@ struct MenuBarView: View {
             
             Spacer()
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, UIStyleConfiguration.spacingXS)
     }
     
     // MARK: - CPU Metric
@@ -186,7 +186,7 @@ struct MenuBarView: View {
         let theme = themeManager.currentTheme
         let metricColor = getColorForPercentage(cpu.usagePercentage, theme: theme)
         
-        return VStack(alignment: .leading, spacing: 8) {
+        return VStack(alignment: .leading, spacing: UIStyleConfiguration.spacingS) {
             HStack {
                 Image(systemName: "cpu")
                     .foregroundColor(metricColor)
@@ -212,10 +212,10 @@ struct MenuBarView: View {
             metricRow(label: "System", value: String(format: "%.1f%%", cpu.systemUsage))
             metricRow(label: "Idle", value: String(format: "%.1f%%", cpu.idlePercentage))
         }
-        .padding(12)
-        .background(modernCardBackground) // T071: Modern styling
-        .cornerRadius(12) // T071: Increased corner radius
-        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2) // T071: Subtle shadow
+        .padding(UIStyleConfiguration.spacingM)
+        .background(modernCardBackground)
+        .cornerRadius(UIStyleConfiguration.cornerRadiusL)
+        .shadow(color: UIStyleConfiguration.cardShadow, radius: UIStyleConfiguration.cardShadowRadius, x: 0, y: UIStyleConfiguration.cardShadowY)
     }
     
     // MARK: - Memory Metric
@@ -225,7 +225,7 @@ struct MenuBarView: View {
         let percentage = Double(memory.usedBytes) / Double(memory.totalBytes) * 100
         let metricColor = getColorForPercentage(percentage, theme: theme)
         
-        return VStack(alignment: .leading, spacing: 8) {
+        return VStack(alignment: .leading, spacing: UIStyleConfiguration.spacingS) {
             HStack {
                 Image(systemName: "memorychip")
                     .foregroundColor(metricColor)
@@ -255,10 +255,10 @@ struct MenuBarView: View {
                 metricRow(label: "Cached", value: formatMemory(memory.cachedBytes))
             }
         }
-        .padding(12)
-        .background(modernCardBackground) // T071: Modern styling
-        .cornerRadius(12) // T071: Increased corner radius
-        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2) // T071: Subtle shadow
+        .padding(UIStyleConfiguration.spacingM)
+        .background(modernCardBackground)
+        .cornerRadius(UIStyleConfiguration.cornerRadiusL)
+        .shadow(color: UIStyleConfiguration.cardShadow, radius: UIStyleConfiguration.cardShadowRadius, x: 0, y: UIStyleConfiguration.cardShadowY)
     }
     
     // MARK: - Disk Metric
@@ -267,7 +267,7 @@ struct MenuBarView: View {
         let theme = themeManager.currentTheme
         let metricColor = getColorForPercentage(disk.usagePercentage, theme: theme)
         
-        return VStack(alignment: .leading, spacing: 8) {
+        return VStack(alignment: .leading, spacing: UIStyleConfiguration.spacingS) {
             HStack {
                 Image(systemName: "internaldrive")
                     .foregroundColor(metricColor)
@@ -298,10 +298,10 @@ struct MenuBarView: View {
             metricRow(label: "Used", value: formatMemory(disk.usedBytes))
             metricRow(label: "Free", value: formatMemory(disk.freeBytes))
         }
-        .padding(12)
-        .background(modernCardBackground) // T071: Modern styling
-        .cornerRadius(12) // T071: Increased corner radius
-        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2) // T071: Subtle shadow
+        .padding(UIStyleConfiguration.spacingM)
+        .background(modernCardBackground)
+        .cornerRadius(UIStyleConfiguration.cornerRadiusL)
+        .shadow(color: UIStyleConfiguration.cardShadow, radius: UIStyleConfiguration.cardShadowRadius, x: 0, y: UIStyleConfiguration.cardShadowY)
     }
     
     // MARK: - Network Metric
@@ -309,7 +309,7 @@ struct MenuBarView: View {
     private func networkMetricView(network: NetworkMetrics) -> some View {
         let theme = themeManager.currentTheme
         
-        return VStack(alignment: .leading, spacing: 8) {
+        return VStack(alignment: .leading, spacing: UIStyleConfiguration.spacingS) {
             HStack {
                 Image(systemName: "network")
                     .foregroundColor(theme.accentColor)
@@ -335,10 +335,10 @@ struct MenuBarView: View {
             )
             .help("Download speed: \(network.downloadFormatted)") // T072: Tooltip
         }
-        .padding(12)
-        .background(modernCardBackground) // T071: Modern styling
-        .cornerRadius(12) // T071: Increased corner radius
-        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2) // T071: Subtle shadow
+        .padding(UIStyleConfiguration.spacingM)
+        .background(modernCardBackground)
+        .cornerRadius(UIStyleConfiguration.cornerRadiusL)
+        .shadow(color: UIStyleConfiguration.cardShadow, radius: UIStyleConfiguration.cardShadowRadius, x: 0, y: UIStyleConfiguration.cardShadowY)
     }
     
     // MARK: - Actions
@@ -361,9 +361,9 @@ struct MenuBarView: View {
             }
             .help("Quit MenubarStatus") // T072: Tooltip
         }
-        .background(modernCardBackground) // T071: Modern styling
-        .cornerRadius(12) // T071: Increased corner radius
-        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2) // T071: Subtle shadow
+        .background(modernCardBackground)
+        .cornerRadius(UIStyleConfiguration.cornerRadiusL)
+        .shadow(color: UIStyleConfiguration.cardShadow, radius: UIStyleConfiguration.cardShadowRadius, x: 0, y: UIStyleConfiguration.cardShadowY)
     }
     
     // MARK: - Helper Views
@@ -383,7 +383,7 @@ struct MenuBarView: View {
                     .foregroundColor(destructive ? .red : .primary)
                 Spacer()
             }
-            .padding(.horizontal, 12)
+            .padding(.horizontal, UIStyleConfiguration.spacingM)
             .padding(.vertical, 10)
             .contentShape(Rectangle())
         }
@@ -401,11 +401,11 @@ struct MenuBarView: View {
             }
             .buttonStyle(.plain)
             .background(
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(isHovering ? Color.accentColor.opacity(0.1) : Color.clear) // T072: Hover effect
+                RoundedRectangle(cornerRadius: UIStyleConfiguration.cornerRadiusS)
+                    .fill(isHovering ? Color.accentColor.opacity(UIStyleConfiguration.opacityActive) : Color.clear)
             )
             .onHover { hovering in
-                withAnimation(AnimationProvider.quickFade) {
+                withAnimation(.fastUI) {
                     isHovering = hovering
                 }
             }
@@ -434,7 +434,7 @@ struct MenuBarView: View {
     }
     
     private var loadingView: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: UIStyleConfiguration.spacingM) {
             ProgressView()
                 .scaleEffect(1.5)
                 .progressViewStyle(.circular)
@@ -443,9 +443,9 @@ struct MenuBarView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(40)
-        .background(modernCardBackground) // T071: Modern styling
-        .cornerRadius(12) // T071: Increased corner radius
-        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2) // T071: Subtle shadow
+        .background(modernCardBackground)
+        .cornerRadius(UIStyleConfiguration.cornerRadiusL)
+        .shadow(color: UIStyleConfiguration.cardShadow, radius: UIStyleConfiguration.cardShadowRadius, x: 0, y: UIStyleConfiguration.cardShadowY)
     }
     
     // T071: Modern card background with translucent effect
@@ -456,7 +456,7 @@ struct MenuBarView: View {
                 .opacity(colorScheme == .dark ? 0.4 : 0.6)
             
             // Subtle border for definition
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: UIStyleConfiguration.cornerRadiusL)
                 .strokeBorder(
                     Color.primary.opacity(0.1),
                     lineWidth: 0.5

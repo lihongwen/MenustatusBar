@@ -29,6 +29,9 @@ protocol ColorTheme {
     
     // Gradient Support
     func gradient(for percentage: Double) -> LinearGradient
+    
+    // Status Color
+    func statusColor(for percentage: Double) -> Color
 }
 
 // MARK: - System Default Theme
@@ -65,6 +68,16 @@ struct SystemDefaultTheme: ColorTheme {
             endPoint: .trailing
         )
     }
+    
+    func statusColor(for percentage: Double) -> Color {
+        if percentage < 60 {
+            return healthyColor
+        } else if percentage < 80 {
+            return warningColor
+        } else {
+            return criticalColor
+        }
+    }
 }
 
 // MARK: - Monochrome Theme
@@ -93,6 +106,16 @@ struct MonochromeTheme: ColorTheme {
             startPoint: .leading,
             endPoint: .trailing
         )
+    }
+    
+    func statusColor(for percentage: Double) -> Color {
+        if percentage < 60 {
+            return healthyColor
+        } else if percentage < 80 {
+            return warningColor
+        } else {
+            return criticalColor
+        }
     }
 }
 
@@ -130,6 +153,16 @@ struct TrafficLightTheme: ColorTheme {
             endPoint: .trailing
         )
     }
+    
+    func statusColor(for percentage: Double) -> Color {
+        if percentage < 60 {
+            return healthyColor
+        } else if percentage < 80 {
+            return warningColor
+        } else {
+            return criticalColor
+        }
+    }
 }
 
 // MARK: - Cool Theme
@@ -166,6 +199,16 @@ struct CoolTheme: ColorTheme {
             endPoint: .trailing
         )
     }
+    
+    func statusColor(for percentage: Double) -> Color {
+        if percentage < 60 {
+            return healthyColor
+        } else if percentage < 80 {
+            return warningColor
+        } else {
+            return criticalColor
+        }
+    }
 }
 
 // MARK: - Warm Theme
@@ -201,6 +244,16 @@ struct WarmTheme: ColorTheme {
             startPoint: .leading,
             endPoint: .trailing
         )
+    }
+    
+    func statusColor(for percentage: Double) -> Color {
+        if percentage < 60 {
+            return healthyColor
+        } else if percentage < 80 {
+            return warningColor
+        } else {
+            return criticalColor
+        }
     }
 }
 

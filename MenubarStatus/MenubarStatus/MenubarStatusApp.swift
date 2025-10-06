@@ -37,20 +37,23 @@ struct MenubarStatusApp: App {
         }
     }
     
+    // MARK: - Menubar Label
+    
+    /// 菜单栏标签 - 使用统一的紧凑格式  
+    private var menubarLabel: some View {
+        MenubarLabelWrapper(
+            metrics: viewModel.currentMetrics,
+            settingsManager: settingsManager
+        )
+    }
+    
     var body: some Scene {
         MenuBarExtra {
             // Dropdown content
             MenuBarView(viewModel: viewModel)
         } label: {
-            // Menu bar label - 使用主题颜色
-            HStack(spacing: 4) {
-                Image(systemName: "chart.xyaxis.line")
-                    .imageScale(.small)
-                    .foregroundColor(viewModel.menuBarIconColor) // 🎨 应用主题颜色
-                
-                Text(viewModel.displayText)
-                    .font(.system(size: 11, design: .monospaced))
-            }
+            // Menu bar label - 使用新的 MenubarLabel 组件
+            menubarLabel
         }
         .menuBarExtraStyle(.window)
         // T087: Keyboard shortcuts
@@ -116,5 +119,27 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 extension Notification.Name {
     static let startMonitoring = Notification.Name("startMonitoring")
     static let settingsDidChange = Notification.Name("settingsDidChange")
+}
+
+// MARK: - Menubar Label Wrapper
+
+/// 包装器视图，用于正确响应设置变化
+struct MenubarLabelWrapper: View {
+    let metrics: SystemMetrics?
+    @ObservedObject var settingsManager: SettingsManager
+    
+    var body: some View {
+        // 构建 summary
+        let summary: MenubarSummary = {
+            if let metrics = metrics {
+                return MenubarSummaryBuilder.build(from: metrics, settings: settingsManager.settings)
+            } else {
+                return MenubarSummary(items: [])
+            }
+        }()
+        
+        // 使用 MenubarLabel 组件显示
+        return MenubarLabel(summary: summary)
+    }
 }
 

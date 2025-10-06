@@ -51,7 +51,7 @@ struct SettingsView: View {
                 }
             }
             .pickerStyle(.segmented)
-            .padding()
+            .padding(UIStyleConfiguration.spacingM)
             
             Divider()
             
@@ -69,7 +69,7 @@ struct SettingsView: View {
                         advancedTab
                     }
                 }
-                .padding()
+                .padding(UIStyleConfiguration.spacingM)
             }
             
             Divider()
@@ -88,7 +88,7 @@ struct SettingsView: View {
                 }
                 .keyboardShortcut(.defaultAction)
             }
-            .padding()
+            .padding(UIStyleConfiguration.spacingM)
         }
         .frame(width: 600, height: 500)
         .alert(LocalizedStrings.restartApplicationTitle, isPresented: $showLanguageChangeAlert) {
@@ -172,28 +172,23 @@ struct SettingsView: View {
                 ))
             }
             
-            Section(header: Text(LocalizedStrings.displayMode)) {
-                Picker(LocalizedStrings.mode, selection: Binding(
-                    get: { viewModel.settings.displayConfiguration.displayMode },
+            Section(header: Text("Menubar Display")) {
+                Toggle("Show Icons", isOn: Binding(
+                    get: { viewModel.settings.displayConfiguration.showMenubarIcons },
                     set: { 
                         var config = viewModel.settings.displayConfiguration
-                        config.displayMode = $0
+                        config.showMenubarIcons = $0
                         viewModel.settings.displayConfiguration = config
                     }
-                )) {
-                    ForEach(DisplayMode.allCases, id: \.self) { mode in
-                        Text(mode.displayName).tag(mode)
-                    }
-                }
-                .pickerStyle(.radioGroup)
+                ))
                 
-                Text(LocalizedStrings.changesMenubarStyle)
+                Text("Display SF Symbols icons in the menubar alongside values")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
             
             Section(header: Text(LocalizedStrings.metricOrder)) {
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: UIStyleConfiguration.spacingS) {
                     Text(LocalizedStrings.dragToReorder)
                         .font(.subheadline)
                     
@@ -234,7 +229,7 @@ struct SettingsView: View {
                 ))
                 
                 if viewModel.settings.displayConfiguration.autoHideEnabled {
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: UIStyleConfiguration.spacingS) {
                         HStack {
                             Text("Hide when below:")
                             Spacer()
@@ -267,7 +262,7 @@ struct SettingsView: View {
     private var appearanceTab: some View {
         Form {
             Section(header: Text(LocalizedStrings.colorTheme)) {
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: UIStyleConfiguration.spacingM) {
                     Text(LocalizedStrings.theme)
                         .font(.subheadline)
                     
@@ -319,7 +314,7 @@ struct SettingsView: View {
     private var monitoringTab: some View {
         Form {
             Section(header: Text(LocalizedStrings.refreshSettings)) {
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: UIStyleConfiguration.spacingS) {
                     HStack {
                         Text(LocalizedStrings.refreshInterval)
                         Spacer()
@@ -413,9 +408,9 @@ struct SettingsView: View {
                 
                 Spacer()
             }
-            .padding(8)
+            .padding(UIStyleConfiguration.spacingS)
             .background(Color.secondary.opacity(0.1))
-            .cornerRadius(6)
+            .cornerRadius(UIStyleConfiguration.cornerRadiusS)
         }
         .onMove { source, destination in
             viewModel.moveMetric(from: source, to: destination)
@@ -449,13 +444,13 @@ struct SettingsView: View {
                         .frame(width: 16, height: 16)
                 }
             }
-            .padding(8)
+            .padding(UIStyleConfiguration.spacingS)
             .background(
                 viewModel.selectedTheme.identifier == theme.identifier ?
-                Color.accentColor.opacity(0.1) :
+                Color.accentColor.opacity(UIStyleConfiguration.opacityActive) :
                 Color.clear
             )
-            .cornerRadius(6)
+            .cornerRadius(UIStyleConfiguration.cornerRadiusS)
         }
         .buttonStyle(.plain)
     }

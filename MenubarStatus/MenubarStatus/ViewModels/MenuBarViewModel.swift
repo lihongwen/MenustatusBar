@@ -58,23 +58,14 @@ final class MenuBarViewModel: ObservableObject {
     
     // MARK: - Computed Properties
     
-    /// Text to display in the menubar - 根据 DisplayMode 改变显示方式
+    /// Text to display in the menubar - using unified compact format
     var displayText: String {
         guard let metrics = currentMetrics else {
             return "---"
         }
         
-        // 🔧 FIX: 根据 Display Mode 返回不同格式
-        switch settings.displayConfiguration.displayMode {
-        case .iconAndValue:
-            return iconAndValueText(metrics: metrics)
-        case .compactText:
-            return compactText(metrics: metrics)
-        case .graphMode:
-            return graphModeText(metrics: metrics)
-        case .iconsOnly:
-            return iconsOnlyText(metrics: metrics)
-        }
+        // Use unified compact format (Icon + Value style)
+        return iconAndValueText(metrics: metrics)
     }
     
     // MARK: - Display Mode Implementations
