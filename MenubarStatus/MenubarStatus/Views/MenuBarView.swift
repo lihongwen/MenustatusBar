@@ -267,36 +267,75 @@ struct MenuBarView: View {
         let theme = themeManager.currentTheme
         let metricColor = getColorForPercentage(disk.usagePercentage, theme: theme)
         
+        // 根据设置中的 diskDisplayMode 显示不同内容
+        let displayMode = viewModel.settings.diskDisplayMode
+        
         return VStack(alignment: .leading, spacing: UIStyleConfiguration.spacingS) {
             HStack {
                 Image(systemName: "internaldrive")
                     .foregroundColor(metricColor)
-                    .help("Disk Usage for \(disk.volumeName)") // T072: Tooltip
+                    .help("Disk \(displayMode == .capacity ? "Usage" : "I/O Speed") for \(disk.volumeName)")
                 Text(LocalizedStrings.disk)
                     .font(.headline)
                 Spacer()
-                Text(String(format: "%.1f%%", disk.usagePercentage))
-                    .font(.headline)
-                    .monospacedDigit()
-                    .foregroundColor(metricColor)
-                    .help("Disk usage: \(String(format: "%.1f%%", disk.usagePercentage))") // T072: Tooltip
+                
+                // 根据模式显示不同的值
+                if displayMode == .capacity {
+                    Text(String(format: "%.1f%%", disk.usagePercentage))
+                        .font(.headline)
+                        .monospacedDigit()
+                        .foregroundColor(metricColor)
+                        .help("Disk usage: \(String(format: "%.1f%%", disk.usagePercentage))")
+                } else {
+                    // I/O Speed mode - 显示读写速度
+                    Text("R: 0 KB/s W: 0 KB/s") // TODO: 实际读写速度
+                        .font(.headline)
+                        .monospacedDigit()
+                        .foregroundColor(.secondary)
+                        .help("Disk I/O speed (data not yet available)")
+                }
             }
             
-            ProgressView(value: disk.usagePercentage / 100.0)
-                .tint(metricColor)
-                .animation(AnimationProvider.smoothTransition, value: disk.usagePercentage) // T070: Animate value changes
-                .accessibilityLabel("Disk usage: \(String(format: "%.1f", disk.usagePercentage)) percent") // T089: Accessibility
+            if displayMode == .capacity {
+                // 容量模式：显示进度条
+                ProgressView(value: disk.usagePercentage / 100.0)
+                    .tint(metricColor)
+                    .animation(AnimationProvider.smoothTransition, value: disk.usagePercentage)
+                    .accessibilityLabel("Disk usage: \(String(format: "%.1f", disk.usagePercentage)) percent")
+            } else {
+                // I/O 速度模式：显示速度条或占位符
+                HStack(spacing: UIStyleConfiguration.spacingXS) {
+                    Image(systemName: "arrow.down.circle.fill")
+                        .foregroundColor(.blue)
+                    Text("Read: N/A")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    Image(systemName: "arrow.up.circle.fill")
+                        .foregroundColor(.orange)
+                    Text("Write: N/A")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
             
             Divider()
             
             Text(disk.volumeName)
                 .font(.subheadline)
                 .foregroundColor(.secondary)
-                .help("Volume: \(disk.volumePath)") // T072: Tooltip
+                .help("Volume: \(disk.volumePath)")
             
-            metricRow(label: "Total", value: formatMemory(disk.totalBytes))
-            metricRow(label: "Used", value: formatMemory(disk.usedBytes))
-            metricRow(label: "Free", value: formatMemory(disk.freeBytes))
+            if displayMode == .capacity {
+                metricRow(label: "Total", value: formatMemory(disk.totalBytes))
+                metricRow(label: "Used", value: formatMemory(disk.usedBytes))
+                metricRow(label: "Free", value: formatMemory(disk.freeBytes))
+            } else {
+                metricRow(label: "Read Speed", value: "N/A")
+                metricRow(label: "Write Speed", value: "N/A")
+                metricRow(label: "Total Read", value: "N/A")
+                metricRow(label: "Total Write", value: "N/A")
+            }
         }
         .padding(UIStyleConfiguration.spacingM)
         .background(modernCardBackground)

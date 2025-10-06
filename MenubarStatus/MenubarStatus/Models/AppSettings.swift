@@ -104,9 +104,6 @@ struct AppSettings: Codable {
     // Launch configuration
     var launchAtLogin: Bool
     
-    // Display format preferences
-    var useCompactMode: Bool
-    
     // NEW: Display configuration for modern UI
     var displayConfiguration: DisplayConfiguration
     
@@ -122,7 +119,6 @@ struct AppSettings: Codable {
         selectedDiskPath: String = "/",
         diskDisplayMode: DiskDisplayMode = .capacity,
         launchAtLogin: Bool = false,
-        useCompactMode: Bool = true,
         displayConfiguration: DisplayConfiguration = DisplayConfiguration(),
         language: AppLanguage = .english
     ) {
@@ -140,7 +136,6 @@ struct AppSettings: Codable {
         self.diskDisplayMode = diskDisplayMode
         
         self.launchAtLogin = launchAtLogin
-        self.useCompactMode = useCompactMode
         self.displayConfiguration = displayConfiguration
         self.language = language
     }
@@ -156,9 +151,10 @@ struct AppSettings: Codable {
         case _selectedDiskPath = "selectedDiskPath"
         case diskDisplayMode
         case launchAtLogin
-        case useCompactMode
         case displayConfiguration
         case language
+        
+        // 已删除：useCompactMode (v1.0.1 统一使用紧凑格式)
     }
 }
 

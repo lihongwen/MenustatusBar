@@ -23,12 +23,11 @@ struct DisplayConfiguration: Codable {
     var autoHideEnabled: Bool
     var autoHideThreshold: Double  // 0.0-1.0 (e.g., 0.5 = 50%)
     
-    // Color Theme
-    var colorThemeIdentifier: String
-    
     // Process Display
     var showTopProcesses: Bool
     var processSortCriteria: String  // ProcessSortCriteria.rawValue
+    
+    // Note: colorThemeIdentifier removed in v1.0.1 - always use SystemDefaultTheme
     
     // Validation
     init(
@@ -37,7 +36,6 @@ struct DisplayConfiguration: Codable {
         metricOrder: [String] = MetricType.allCases.map { $0.rawValue },
         autoHideEnabled: Bool = false,
         autoHideThreshold: Double = 0.5,
-        colorThemeIdentifier: String = "system",
         showTopProcesses: Bool = false,
         processSortCriteria: String = "cpu"
     ) {
@@ -46,7 +44,6 @@ struct DisplayConfiguration: Codable {
         self.metricOrder = metricOrder
         self.autoHideEnabled = autoHideEnabled
         self.autoHideThreshold = max(0.0, min(1.0, autoHideThreshold))
-        self.colorThemeIdentifier = colorThemeIdentifier
         self.showTopProcesses = showTopProcesses
         self.processSortCriteria = processSortCriteria
     }

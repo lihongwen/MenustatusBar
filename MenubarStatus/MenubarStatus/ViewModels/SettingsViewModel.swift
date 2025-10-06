@@ -28,15 +28,7 @@ final class SettingsViewModel: ObservableObject {
     
     @Published var availableDisks: [DiskInfo] = []
     
-    // Theme and display configuration
-    @Published var availableThemes: [ColorTheme] = []
-    @Published var selectedTheme: ColorTheme {
-        didSet {
-            // 立即应用主题
-            themeManager.currentTheme = selectedTheme
-            settings.displayConfiguration.colorThemeIdentifier = selectedTheme.identifier
-        }
-    }
+    // Display configuration
     @Published var metricOrderDraft: [MetricType] = []
     
     // MARK: - Private Properties
@@ -51,10 +43,6 @@ final class SettingsViewModel: ObservableObject {
         self.diskMonitor = DiskMonitorImpl()
         self.themeManager = themeManager
         self.settingsManager = settingsManager
-        
-        // Initialize theme-related properties
-        self.availableThemes = themeManager.availableThemes
-        self.selectedTheme = themeManager.currentTheme
         
         // Initialize metric order draft
         self.metricOrderDraft = settingsManager.settings.displayConfiguration.orderedMetrics
@@ -77,7 +65,6 @@ final class SettingsViewModel: ObservableObject {
     func resetToDefaults() {
         settings = AppSettings()
         metricOrderDraft = settings.displayConfiguration.orderedMetrics
-        selectedTheme = SystemDefaultTheme()
     }
     
     // MARK: - Display Configuration Methods
@@ -99,10 +86,6 @@ final class SettingsViewModel: ObservableObject {
         config.autoHideEnabled = enabled
         config.autoHideThreshold = threshold
         settings.displayConfiguration = config
-    }
-    
-    func selectTheme(_ theme: ColorTheme) {
-        selectedTheme = theme
     }
     
     func moveMetric(from source: IndexSet, to destination: Int) {

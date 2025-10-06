@@ -261,23 +261,25 @@ struct SettingsView: View {
     
     private var appearanceTab: some View {
         Form {
-            Section(header: Text(LocalizedStrings.colorTheme)) {
-                VStack(alignment: .leading, spacing: UIStyleConfiguration.spacingM) {
-                    Text(LocalizedStrings.theme)
-                        .font(.subheadline)
-                    
-                    ForEach(viewModel.availableThemes, id: \.identifier) { theme in
-                        themeOption(theme: theme)
+            Section(header: Text("Appearance")) {
+                VStack(alignment: .leading, spacing: UIStyleConfiguration.spacingS) {
+                    HStack {
+                        Image(systemName: "paintbrush.fill")
+                            .foregroundColor(.accentColor)
+                        Text("Color Theme")
+                        Spacer()
+                        Text("Follow System")
+                            .foregroundColor(.secondary)
                     }
+                    
+                    Text("Metrics are color-coded: Green (0-60%), Yellow (60-80%), Red (80-100%)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    
+                    Text("Colors automatically adapt to Light/Dark mode")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
-            }
-            
-            Section(header: Text("Display Options")) {
-                Toggle(LocalizedStrings.compactMode, isOn: Binding(
-                    get: { viewModel.settings.useCompactMode },
-                    set: { viewModel.settings.useCompactMode = $0 }
-                ))
-                    .help(LocalizedStrings.useCompactDisplay)
             }
             
             Section(header: Text("Language")) {
@@ -417,43 +419,6 @@ struct SettingsView: View {
         }
     }
     
-    private func themeOption(theme: ColorTheme) -> some View {
-        Button(action: {
-            viewModel.selectTheme(theme)
-        }) {
-            HStack {
-                // Radio button
-                Image(systemName: viewModel.selectedTheme.identifier == theme.identifier ? "circle.fill" : "circle")
-                    .foregroundColor(.accentColor)
-                
-                // Theme name
-                Text(theme.displayName)
-                
-                Spacer()
-                
-                // Color preview
-                HStack(spacing: 4) {
-                    Circle()
-                        .fill(theme.healthyColor)
-                        .frame(width: 16, height: 16)
-                    Circle()
-                        .fill(theme.warningColor)
-                        .frame(width: 16, height: 16)
-                    Circle()
-                        .fill(theme.criticalColor)
-                        .frame(width: 16, height: 16)
-                }
-            }
-            .padding(UIStyleConfiguration.spacingS)
-            .background(
-                viewModel.selectedTheme.identifier == theme.identifier ?
-                Color.accentColor.opacity(UIStyleConfiguration.opacityActive) :
-                Color.clear
-            )
-            .cornerRadius(UIStyleConfiguration.cornerRadiusS)
-        }
-        .buttonStyle(.plain)
-    }
 }
 
 // MARK: - Preview

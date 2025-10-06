@@ -23,14 +23,21 @@ enum MenubarSummaryBuilder {
             orderedMetricTypes.append(metric)
         }
         
-        // Get theme
-        let theme = ThemeManager.shared.getTheme(identifier: settings.displayConfiguration.colorThemeIdentifier) ?? SystemDefaultTheme()
+        // Always use system default theme (auto adapts to light/dark mode)
+        let theme = SystemDefaultTheme()
         
         let maxVisible = settings.displayConfiguration.maxVisibleMetrics
         let items = Array(
             orderedMetricTypes
                 .compactMap { metricItem(for: $0, metrics: metrics, settings: settings, theme: theme) }
                 .filter { !$0.primaryText.isEmpty }
+                .filter { item in
+                    // Apply Auto-Hide logic if enabled
+                    if settings.displayConfiguration.autoHideEnabled {
+                        return item.percentage >= (settings.displayConfiguration.autoHideThreshold * 100.0)
+                    }
+                    return true
+                }
                 .prefix(maxVisible)
         )
         
